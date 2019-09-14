@@ -1,7 +1,33 @@
 package dk.trustworks.userservice.network.commands;
 
+import dk.trustworks.userservice.model.Role;
+import dk.trustworks.userservice.repositories.RoleRepository;
+import io.vertx.reactivex.ext.web.RoutingContext;
+
+import static dk.trustworks.userservice.ActionHelper.noContent;
+import static dk.trustworks.userservice.ActionHelper.onError;
+
 //@Controller("/users")
-public class RoleCommandRepository { //extends Controller.Util {
+public class RoleCommandController { //extends Controller.Util {
+
+    private RoleRepository roleRepository;
+
+    public RoleCommandController(RoleRepository roleRepository) {
+        this.roleRepository = roleRepository;
+    }
+
+    public void createUserRole(RoutingContext rc) {
+        System.out.println("RoleCommandController.createUserRole");
+        String useruuid = rc.pathParam("useruuid");
+        Role role = rc.getBodyAsJson().mapTo(Role.class);
+        roleRepository.create(useruuid, role).subscribe(noContent(rc), onError(rc));
+    }
+
+    public void deleteUserRoles(RoutingContext rc) {
+        System.out.println("RoleCommandController.deleteUserRoles");
+        String useruuid = rc.pathParam("useruuid");
+        roleRepository.delete(useruuid).subscribe(noContent(rc), onError(rc));;
+    }
 /*
     private EbeanDao<String, User> userDao;
     private EbeanDao<String, Role> roleDao;
@@ -38,4 +64,9 @@ public class RoleCommandRepository { //extends Controller.Util {
     }
 
  */
+
+    @Override
+    public String toString() {
+        return "RoleCommandController{}";
+    }
 }

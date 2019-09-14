@@ -1,52 +1,39 @@
 package dk.trustworks.userservice;
 
+import dk.trustworks.userservice.network.commands.RoleCommandController;
+import dk.trustworks.userservice.network.commands.SalaryCommandController;
+import dk.trustworks.userservice.network.commands.StatusCommandController;
 import dk.trustworks.userservice.network.queries.UserQueryController;
 import dk.trustworks.userservice.repositories.*;
 import io.jaegertracing.Configuration;
 import io.opentracing.util.GlobalTracer;
 import io.reactivex.Completable;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.CompletableHelper;
 import io.vertx.reactivex.config.ConfigRetriever;
 import io.vertx.reactivex.core.AbstractVerticle;
-import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.jdbc.JDBCClient;
 import io.vertx.reactivex.ext.web.Router;
-import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
 
 import java.util.Locale;
 import java.util.TimeZone;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-
-import static dk.trustworks.userservice.ActionHelper.ok;
 
 public class Server extends AbstractVerticle {
 
     private UserQueryController userQueryController;
 
-    private SalaryRepository salaryRepository;
+    private SalaryCommandController salaryCommandController;
 
-    private RoleRepository roleRepository;
+    private RoleCommandController roleCommandController;
 
-    private StatusRepository statusRepository;
+    private StatusCommandController statusCommandController;
 
     private ContactInfoRepository contactInfoRepository;
 
     public Server() {
-    }
-
-    public static void main(String[] args) throws InterruptedException {
-        BlockingQueue<AsyncResult<String>> q = new ArrayBlockingQueue<>(1);
-        Vertx.vertx().deployVerticle(new Server(), q::offer);
-        AsyncResult<String> result = q.take();
-        if (result.failed()) {
-            throw new RuntimeException(result.cause());
-        }
     }
 
     @Override
@@ -110,20 +97,29 @@ public class Server extends AbstractVerticle {
                 .doOnSuccess(config -> {
                     System.out.println("config = " + config);
                     userQueryController = new UserQueryController(new UserRepository(JDBCClient.createShared(vertx, config, "usermanager")));
-                    salaryRepository = new SalaryRepository(JDBCClient.createShared(vertx, config, "usermanager"));
-                    roleRepository = new RoleRepository(JDBCClient.createShared(vertx, config, "usermanager"));
-                    statusRepository = new StatusRepository(JDBCClient.createShared(vertx, config, "usermanager"));
+                    salaryCommandController = new SalaryCommandController(new SalaryRepository(JDBCClient.createShared(vertx, config, "usermanager")));
+                    roleCommandController = new RoleCommandController(new RoleRepository(JDBCClient.createShared(vertx, config, "usermanager")));
+                    statusCommandController = new StatusCommandController(new StatusRepository(JDBCClient.createShared(vertx, config, "usermanager")));
                     contactInfoRepository = new ContactInfoRepository(JDBCClient.createShared(vertx, config, "usermanager"));
 
                     System.out.println("userQueryController = " + userQueryController);
                     router.get("/users").handler(userQueryController::getAllUsers);
                     router.get("/users/:uuid").handler(userQueryController::getOne);
-                    router.get("/users/:useruuid/salaries").handler(this::getUserSalaries);
                     router.get("/users/search/findByUsername").handler(userQueryController::findByOrderByUsername);
                     router.get("/users/search/findUsersByDateAndStatusListAndTypes").handler(userQueryController::findUsersByDateAndStatusListAndTypes);
                     router.get("/users/command/calculateCapacityByMonthByUser").handler(userQueryController::calculateCapacityByMonthByUser);
                     router.get("/users/command/login").handler(userQueryController::login);
                     router.put("/users/:uuid").handler(userQueryController::updateOne);
+
+                    router.get("/users/:useruuid/salaries").handler(salaryCommandController::getUserSalaries);
+                    router.post("/users/:useruuid/salaries").handler(salaryCommandController::createUserSalary);
+                    router.delete("/users/:useruuid/salaries/:salaryuuid").handler(salaryCommandController::deleteUserSalary);
+
+                    router.post("/users/:useruuid/statuses").handler(statusCommandController::createUserSalary);
+                    router.delete("/users/:useruuid/statuses/:statusuuid").handler(statusCommandController::deleteUserSalary);
+
+                    router.post("/users/:useruuid/roles").handler(roleCommandController::createUserRole);
+                    router.delete("/users/:useruuid/roles").handler(roleCommandController::deleteUserRoles);
                 })
                 .flatMapCompletable(config -> createHttpServer(config, router))
                 .subscribe(CompletableHelper.toObserver(fut));
@@ -138,11 +134,4 @@ public class Server extends AbstractVerticle {
                 .rxListen(config.getInteger("HTTP_PORT", 5460))
                 .ignoreElement();
     }
-
-    private void getUserSalaries(RoutingContext rc) {
-        String useruuid = rc.pathParam("useruuid");
-        salaryRepository.getAllUserSalaries(useruuid).subscribe(ok(rc));
-    }
-
-
 }
