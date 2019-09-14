@@ -174,7 +174,9 @@ public class UserRepository {
                 "ON yt.statusdate = ss.created AND yt.useruuid = ss.useruuid " +
                 "WHERE yt.status IN ('"+String.join("','", consultantStatusList)+"') AND yt.type IN ('"+String.join("','", consultantTypes)+"') " +
                 ") kk " +
-                "ON u.uuid = kk.useruuid ORDER BY u.username;";
+                "ON u.uuid = kk.useruuid " +
+                "WHERE kk.status IN ('"+String.join("','", consultantStatusList)+"') AND kk.type IN ('"+String.join("','", consultantTypes)+"') " +
+                "ORDER BY u.username;";
         return getListSingle(sql);
     }
 
