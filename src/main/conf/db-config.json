@@ -1,0 +1,7 @@
+{
+  "HTTP_PORT": 5460,
+  "url": "jdbc:mysql://localhost:3306/userservice?noDatetimeStringSync=true&characterEncoding=utf8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=true&serverTimezone=Europe/Berlin",
+  "driver_class": "com.mysql.cj.jdbc.Driver",
+  "user": "root",
+  "password": ""
+}
