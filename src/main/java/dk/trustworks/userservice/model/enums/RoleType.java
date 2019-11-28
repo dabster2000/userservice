@@ -5,6 +5,6 @@ package dk.trustworks.userservice.model.enums;
  */
 public enum RoleType {
 
-    USER, EXTERNAL, EDITOR, CXO, SALES, VTV, ACCOUNTING, PARTNER, ADMIN
+    USER, EXTERNAL, EDITOR, CXO, SALES, VTV, ACCOUNTING, MANAGER, PARTNER, ADMIN
 
 }

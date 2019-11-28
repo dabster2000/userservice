@@ -61,7 +61,9 @@ public class UserQueryController {
 
     public void login(RoutingContext rc) {
         String username = rc.request().getParam("username");
+        System.out.println("username = " + username);
         String password = rc.request().getParam("password");
+        System.out.println("password = " + password);
         userRepository.findByUsername(username).subscribe(user -> {
             LoginTokenResult tokenResult;
             if(user.checkPassword(password)) {
