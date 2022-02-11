@@ -22,7 +22,7 @@
 
 
 
-    <vertx.version>3.7.1</vertx.version>
+    <vertx.version>3.9.4</vertx.version>
     <vertx-maven-plugin.version>1.0.13</vertx-maven-plugin.version>
     <vertx.verticle>dk.trustworks.userservice.Server</vertx.verticle>
   </properties>
